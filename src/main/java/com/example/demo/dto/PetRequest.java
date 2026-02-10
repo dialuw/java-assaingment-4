@@ -3,14 +3,10 @@ package com.example.demo.dto;
 import lombok.Data;
 
 @Data
-public class PetDTO {
-    private Long id;
+public class PetRequest {
     private String name;
     private int age;
-    private boolean adopted;
-    private String type;
+    private String type; // DOG or CAT
     private String breed;
     private String color;
-    private String sound;
-    private String info;
 }

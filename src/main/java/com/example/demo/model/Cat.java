@@ -4,21 +4,21 @@ import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 
 @Entity
 @DiscriminatorValue("CAT")
 @Data
 @EqualsAndHashCode(callSuper = true)
-@NoArgsConstructor
 public class Cat extends Pet {
+    private String color;
 
-    public Cat(String name, int age) {
-        super(name, age);
+    @Override
+    public String getSound() {
+        return "Meow!";
     }
 
     @Override
-    public String getPetType() {
-        return "CAT";
+    public String getType() {
+        return "Cat";
     }
 }

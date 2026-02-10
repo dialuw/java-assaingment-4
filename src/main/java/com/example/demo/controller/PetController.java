@@ -1,84 +1,91 @@
 package com.example.demo.controller;
 
-import com.example.demo.dto.CreatePetRequest;
 import com.example.demo.dto.PetDTO;
-import com.example.demo.dto.AdoptRequest;
+import com.example.demo.dto.PetRequest;
 import com.example.demo.service.PetService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/pets")
+@CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class PetController {
 
     private final PetService petService;
 
-    @Autowired
-    public PetController(PetService petService) {
-        this.petService = petService;
-    }
-
-    // ===== GET =====
     @GetMapping
-    public ResponseEntity<List<PetDTO>> getAllPets() {
-        return ResponseEntity.ok(petService.getAllPets());
+    public List<PetDTO> getAll() {
+        return petService.getAllPets();
     }
 
     @GetMapping("/available")
-    public ResponseEntity<List<PetDTO>> getAvailablePets() {
-        return ResponseEntity.ok(petService.getAvailablePets());
+    public List<PetDTO> getAvailable() {
+        return petService.getAvailablePets();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PetDTO> getPetById(@PathVariable Long id) {
-        PetDTO pet = petService.getPetById(id);
-        return pet != null ? ResponseEntity.ok(pet) : ResponseEntity.notFound().build();
+    public ResponseEntity<PetDTO> getById(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(petService.getPetById(id));
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
-    // ===== POST =====
-    @PostMapping("/dogs")
-    public ResponseEntity<PetDTO> addDog(@RequestBody CreatePetRequest request) {
-        PetDTO dog = petService.addDog(request.getName(), request.getAge());
-        return ResponseEntity.ok(dog);
+    @PostMapping
+    public PetDTO create(@RequestBody PetRequest request) {
+        return petService.createPet(request);
     }
 
-    @PostMapping("/cats")
-    public ResponseEntity<PetDTO> addCat(@RequestBody CreatePetRequest request) {
-        PetDTO cat = petService.addCat(request.getName(), request.getAge());
-        return ResponseEntity.ok(cat);
-    }
-
-    @PostMapping("/adopt")
-    public ResponseEntity<String> adoptPet(@RequestBody AdoptRequest request) {
-        String result = petService.adoptPet(request.getAdopterName(), request.getPetId());
-        return ResponseEntity.ok(result);
-    }
-
-    // ===== PUT =====
     @PutMapping("/{id}")
-    public ResponseEntity<PetDTO> updatePet(@PathVariable Long id, @RequestBody CreatePetRequest request) {
-        PetDTO updated = petService.updatePet(id, request.getName(), request.getAge());
-        return updated != null ? ResponseEntity.ok(updated) : ResponseEntity.notFound().build();
+    public ResponseEntity<PetDTO> update(@PathVariable Long id,
+                                         @RequestBody PetRequest request) {
+        try {
+            return ResponseEntity.ok(petService.updatePet(id, request));
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
-    // ===== DELETE =====
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deletePet(@PathVariable Long id) {
-        boolean deleted = petService.deletePet(id);
-        return deleted ? ResponseEntity.ok("Pet deleted") : ResponseEntity.notFound().build();
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        try {
+            petService.deletePet(id);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PostMapping("/{id}/adopt")
+    public ResponseEntity<String> adopt(@PathVariable Long id,
+                                        @RequestBody Map<String, String> request) {
+        try {
+            String adopterName = request.get("adopterName");
+            return ResponseEntity.ok(petService.adoptPet(id, adopterName));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/stats")
+    public Map<String, Object> getStats() {
+        List<PetDTO> all = petService.getAllPets();
+        int adopted = petService.getAdoptedCount();
+
+        return Map.of(
+                "total", all.size(),
+                "adopted", adopted,
+                "available", all.size() - adopted
+        );
     }
 
     @GetMapping("/health")
-    public ResponseEntity<String> health() {
-        return ResponseEntity.ok("REST API is working!");
-    }
-
-    @GetMapping("/debug")
-    public ResponseEntity<String> debug() {
-        petService.printAllPets();
-        return ResponseEntity.ok("Debug info printed to console");
+    public String health() {
+        return "✅ Pet Adoption API is running!";
     }
 }
